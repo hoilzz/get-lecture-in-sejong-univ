@@ -90,8 +90,8 @@ function postLogin(callback){
     var loginForm = {
         "rtUrl": "uis.sejong.ac.kr%2Fapp%2Fsys.Login.servj%3FstrCommand%3DSSOLOGIN",
         "loginUrl": "uisloginSSL.jsp",
-        "id": "101954",
-        "password": "worbsWkd09"
+        "id": "",
+        "password": ""
     };
     /*
         아이디, 비밀번호를 입력하여 로그인 한다
