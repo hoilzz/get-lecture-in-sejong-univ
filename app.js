@@ -6,7 +6,6 @@ var http = require('http');
 var url = require('url');
 var async = require('async');
 var querystring = require('querystring');
-
 var cookies = [];
 var postOptions = {
     host: 'portal.sejong.ac.kr',
@@ -38,27 +37,14 @@ function updateCookie(setCookie){
     for(var i = 0; i<setCookie.length;i++){
         cookies.push(setCookie[i].split(";")[0]);
     }
-}
+};
 
 function convertPostData(data){
     var processedData = querystring.stringify(data);
     postOptions.headers["Content-Length"] = Buffer.byteLength(processedData);
 
     return processedData;
-}
-
-// async.waterfall([
-//     getLogin,
-//     postLogin,
-//     getSSOLogin,
-//     postForLectureData
-// ], function(err, callback){
-//     if(err){
-//         console.log("err found");
-//         console.log(err);
-//     }
-// });
-
+};
 
 var getLogin = function(){
     /*
@@ -74,7 +60,7 @@ var getLogin = function(){
     return new Promise (function(resolve, reject){
         http.get("http://portal.sejong.ac.kr/jsp/login/uisloginSSL.jsp",function(res) {
             if(res.statusCode != 200){
-                console.log("failed with statusCode " + res.statusCode);
+                reject(Error("1. Response of login page status code is not 200 OK " + " with statusCode " + res.statusCode));
             }
             res.setEncoding('utf8');
             updateCookie(res.headers["set-cookie"]);
@@ -115,7 +101,7 @@ var postLogin = function(){
         var loginPostData = convertPostData(loginForm);
         var req_login = http.request(postOptions, function(res){
             if(res.statusCode != 200){
-                console.log("failed with statusCode " + res.statusCode);
+                reject(Error("2. Response status Code of 'Post /login' is not 200 OK " + " with statusCode " + res.statusCode));
             }
             res.setEncoding('utf8');
             updateCookie(res.headers["set-cookie"]);
@@ -131,18 +117,6 @@ var postLogin = function(){
     });
 
 };
-
-//Promise 실행
-// _promise(true)
-//     .then(function (text) {
-//         console.log(text);
-//         return async1();
-//     })
-//     .then(function(){
-//         return async2();
-//     });
-
-
 
 var getSSOLogin = function(){
     /*
@@ -169,7 +143,7 @@ var getSSOLogin = function(){
 
         var req_SSO = http.request(getOptions, function(res){
             if(res.statusCode != 200){
-                console.log("failed with statusCode " + res.statusCode);
+                reject(Error("2. Response status Code of 'getSSO' is not 200 OK " + " with statusCode " + res.statusCode));
             }
             res.setEncoding('utf8');
             var currentCookie = res.headers["set-cookie"];
@@ -185,9 +159,9 @@ var getSSOLogin = function(){
             resolve();
         });
         req_SSO.end();
-    })
+    });
 
-}
+};
 
 var postForLectureData = function(){
 
@@ -245,29 +219,33 @@ var postForLectureData = function(){
         }
         var req_schsue = http.request(postOptions, function(res){
             if(res.statusCode != 200){
-                console.log("failed with statusCode " + res.statusCode);
+                reject(Error("2. Response status Code of 'Post For lecture data' is not 200 OK " + " with statusCode " + res.statusCode));
             }
             res.setEncoding('utf8');
 
             console.log("4. postForTimestamp " + res.statusCode);
             res.on('data', (chunk) => {
                 console.log(`BODY: ${chunk}`);
-        });
+            });
         });
         req_schsue.write(schsuePostData);
         req_schsue.end();
     });
-}
-
-
+};
 
 getLogin()
     .then(function(){
         return postLogin();
+    }, function (error) {
+        console.error(error);
     })
     .then(function(){
         return getSSOLogin();
+    }, function (error) {
+        console.error(error);
     })
     .then(function(){
         return postForLectureData();
-    })
+    }, function (error) {
+        console.error(error);
+    });
